@@ -1,7 +1,7 @@
 version: "1.0"
 
 services:
-   web:
+  web:
     container_name: container_test
     build: 
       context: .
