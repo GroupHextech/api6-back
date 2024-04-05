@@ -1,7 +1,7 @@
 from ..database.mongodb import mongo
 
 
-def get_all_documents():
+def get_all():
     collection = mongo.db.css
     documents = collection.find({})
     return documents
