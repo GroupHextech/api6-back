@@ -1,17 +1,8 @@
-from flask import Flask
-from flask_cors import CORS
-import warnings
-import os
-from .routes import *
-from .database import mongodb
-from dotenv import load_dotenv
+from app import create_app
 
+# Criar uma instância do aplicativo Flask
+app = create_app()
 
-def create_app(config_object="src.settings"):
-    load_dotenv()
-    app = Flask(__name__)
-    app.config.from_object(config_object)    
-    CORS(app)
-    mongodb.init_db(app)
-    app.register_blueprint(blueprint1)
-    return app
+if __name__ == '__main__':
+    # Iniciar o servidor Flask
+    app.run(debug=True)
