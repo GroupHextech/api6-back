@@ -12,7 +12,7 @@ from ..repositories.css_repository import *
 blueprint_css = Blueprint("css", __name__, url_prefix="/css")
 
 @blueprint_css.route('/all')
-def get_data():
+def get_all():
     documents = get_all()
     list = []
     for doc in documents:
@@ -27,7 +27,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/date')
-def get_data():
+def get_date():
     documents = get_all()
     list = []
     for doc in documents:
@@ -38,7 +38,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/reviewer_id')
-def get_data():
+def get_reviewer_id():
     documents = get_all()
     list = []
     for doc in documents:
@@ -49,7 +49,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/product_id')
-def get_data():
+def get_product_id():
     documents = get_all()
     list = []
     for doc in documents:
@@ -60,7 +60,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/product_name')
-def get_data():
+def get_product_name():
     documents = get_all()
     list = []
     for doc in documents:
@@ -71,7 +71,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/brand')
-def get_data():
+def get_brand():
     documents = get_all()
     list = []
     for doc in documents:
@@ -82,7 +82,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/category1')
-def get_data():
+def get_category1():
     documents = get_all()
     list = []
     for doc in documents:
@@ -93,7 +93,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/category2')
-def get_data():
+def get_category2():
     documents = get_all()
     list = []
     for doc in documents:
@@ -104,7 +104,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/title')
-def get_data():
+def get_title():
     documents = get_all()
     list = []
     for doc in documents:
@@ -115,7 +115,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/rating')
-def get_data():
+def get_rating():
     documents = get_all()
     list = []
     for doc in documents:
@@ -126,7 +126,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/recommend')
-def get_data():
+def get_recommend():
     documents = get_all()
     list = []
     for doc in documents:
@@ -137,7 +137,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/text')
-def get_data():
+def get_text():
     documents = get_all()
     list = []
     for doc in documents:
@@ -148,7 +148,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/birth')
-def get_data():
+def get_birth():
     documents = get_all()
     list = []
     for doc in documents:
@@ -159,7 +159,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/gender')
-def get_data():
+def get_gender():
     documents = get_all()
     list = []
     for doc in documents:
@@ -170,7 +170,7 @@ def get_data():
     return jsonify(result)
 
 @blueprint_css.route('/state')
-def get_data():
+def get_state():
     documents = get_all()
     list = []
     for doc in documents:

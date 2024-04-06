@@ -13,5 +13,5 @@ def create_app(config_object="src.settings"):
     app.config.from_object(config_object)    
     CORS(app)
     mongodb.init_db(app)
-    app.register_blueprint(blueprint1)
+    app.register_blueprint(blueprint_css)
     return app
