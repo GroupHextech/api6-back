@@ -7,11 +7,12 @@ from .database import mongodb
 from dotenv import load_dotenv
 
 
-def create_app(config_object="src.settings"):
-    load_dotenv()
-    app = Flask(__name__)
-    app.config.from_object(config_object)    
-    CORS(app)
-    mongodb.init_db(app)
-    app.register_blueprint(blueprint_css)
-    return app
+app = Flask(__name__)
+app.config["MONGO_URI"] = "mongodb+srv://admin:1234@api6.u8duoyj.mongodb.net/develop?ssl=true&retryWrites=true&w=majority&appName=Api6"
+CORS(app)
+app.register_blueprint(blueprint_css)
+mongodb.init_db(app)
+
+
+if __name__ == "__main__":
+    app.run()

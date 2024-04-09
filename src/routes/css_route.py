@@ -13,19 +13,23 @@ blueprint_css = Blueprint("css", __name__, url_prefix="/css")
 
 @blueprint_css.route('/all')
 def get_all():
-    documents = get_all()
-    list = []
-    for doc in documents:
-        list.append(doc[
-            'submission_date', 'reviewer_id', 'product_id', 'product_name',
-            'product_brand', 'site_category_lv1', 'site_category_lv2',
-            'review_title', 'overall_rating', 'recommend_to_a_friend', 'review_text',
-            'reviewer_birth_year', 'reviewer_gender', 'reviewer_state'
-        ])
-        
-    result = {"list": list}
-    return jsonify(result)
+    try:
+        documents = get_all_documents()
+        list = []
 
+        for doc in documents:
+            list.append(doc[
+                'submission_date', 'reviewer_id', 'product_id', 'product_name',
+                'product_brand', 'site_category_lv1', 'site_category_lv2',
+                'review_title', 'overall_rating', 'recommend_to_a_friend', 'review_text',
+                'reviewer_birth_year', 'reviewer_gender', 'reviewer_state'
+            ])
+            result = {"list": list}
+
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+"""
 @blueprint_css.route('/date')
 def get_date():
     documents = get_all()
@@ -179,3 +183,4 @@ def get_state():
             
     result = {"list": list}
     return jsonify(result)
+"""
