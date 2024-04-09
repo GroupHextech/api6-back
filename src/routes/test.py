@@ -30,10 +30,7 @@ def get_data():
             doc['_id'] = str(doc['_id'])
             if contador < 500:
                 list.append(doc)
-            contador = contador +1
-            #if 'reviewer_state' in doc:
-                #list.append(doc['reviewer_state'])
-            
+            contador = contador + 1                      
         result = {"list": list}
         return jsonify(result)
     except Exception as e:
