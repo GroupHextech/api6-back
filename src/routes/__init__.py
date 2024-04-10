@@ -1,4 +1,4 @@
-from .test import blueprint1
- 
+from .css_route import blueprint_css
 
-__all__ = ["blueprint1"]
+
+__all__ = ["blueprint_css"]
