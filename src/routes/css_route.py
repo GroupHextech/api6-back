@@ -1,6 +1,5 @@
 from flask import Blueprint, jsonify, request, make_response
 import requests
-import datetime
 import time
 import os
 import mimetypes
@@ -15,7 +14,7 @@ blueprint_css = Blueprint("css", __name__, url_prefix="/css")
 @blueprint_css.route('/all')
 def get_all():
     try:
-        documents = find_all()
+        documents = get_all_documents()
         cont = 0
         result = {"list": []}
 

@@ -1,4 +1,4 @@
-from .dbs import *
+from database.mongodb import client
 
 
-collection_css = develop.css
+collection_css = client.db.css

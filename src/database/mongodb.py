@@ -1,7 +1,6 @@
 from flask_pymongo import PyMongo
 
-
-develop = PyMongo()
+client = PyMongo()
 
 def init_db(app):
-    return develop.init_app(app)
+    return client.init_app(app)

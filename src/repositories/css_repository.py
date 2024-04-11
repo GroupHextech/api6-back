@@ -1,6 +1,6 @@
-from src.database.collections import *
+from ..database.collections import *
 
 
-def find_all():
-    collection_css.find({})
-    return collection_css
+def get_all_documents():
+    documents = collection_css.find({})
+    return documents
