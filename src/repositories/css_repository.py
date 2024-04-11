@@ -1,7 +1,6 @@
-from ..database.mongodb import mongo
+from src.database.collections import *
 
 
-def get_all_documents():
-    collection = mongo.db.css
-    documents = collection.find({})
-    return documents
+def find_all():
+    collection_css.find({})
+    return collection_css
