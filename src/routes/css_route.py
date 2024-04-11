@@ -35,7 +35,7 @@ def get_all():
                 'reviewer_gender': doc.get('reviewer_gender'),
                 'reviewer_state': doc.get('reviewer_state')
             }
-            if cont >= 34581:
+            if cont < 34581:
                 result["list"].append(data)
                 cont += 1
 
