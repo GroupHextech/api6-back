@@ -6,33 +6,38 @@ import mimetypes
 import json
 from io import BytesIO
 from bson import json_util, ObjectId
-from ..repositories.css_repository import *
+from src.repositories.css_repository import *
 from ..database import mongodb
 
 
 blueprint_css = Blueprint("css", __name__, url_prefix="/css")
 
+
+
 @blueprint_css.route('/categories')
 def get_categories():
     try:
-        pipeline = [{
-            "$group": {
-                "_id": {
-                    "site_category_lv1": "$site_category_lv1",
-                    "site_category_lv2": "$site_category_lv2"
-                },
-            "contagem": {"$sum": 1},
+        pipeline = [
+            {
+                "$group": {
+                    "_id": {
+                        "site_category_lv1": "$site_category_lv1",
+                        "site_category_lv2": "$site_category_lv2"
+                    },
+                    "contagem": {"$sum": 1},
+                }
+            },
+            {
+                "$sort": {"_id.categoria_lv1": 1}
             }
-        },
-        {
-        "$sort": {"_id.categoria_lv1": 1}
-        }]
-        documents = mongodb.collection.aggregate(pipeline)
+        ]
+        documents = client.db.css.aggregate(pipeline)
         result = {"list": list(documents)}
 
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @blueprint_css.route('/gender')
 def get_gender():
@@ -46,7 +51,7 @@ def get_gender():
         {
             "$sort": {"count": -1}
         }]
-        documents = mongodb.collection.aggregate(pipeline)
+        documents = client.db.css.aggregate(pipeline)
         result = {"list": list(documents)}
 
         return jsonify(result)
@@ -65,7 +70,7 @@ def get_date():
         {
             "$sort": {"count": -1}
         }]
-        documents = mongodb.collection.aggregate(pipeline)
+        documents = client.db.css.aggregate(pipeline)
         result = {"list": list(documents)}
 
         return jsonify(result)
@@ -84,7 +89,7 @@ def get_state():
         {
             "$sort": {"count": -1}
         }]
-        documents = mongodb.collection.aggregate(pipeline)
+        documents = client.db.css.aggregate(pipeline)
         result = {"list": list(documents)}
 
         return jsonify(result)
@@ -103,7 +108,7 @@ def get_birth_year():
         {
             "$sort": {"count": -1}
         }]
-        documents = mongodb.collection.aggregate(pipeline)
+        documents = client.db.css.aggregate(pipeline)
         result = {"list": list(documents)}
 
         return jsonify(result)
