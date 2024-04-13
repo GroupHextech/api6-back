@@ -50,20 +50,19 @@ def get_all():
 @blueprint_css.route('/categories')
 def get_categories():
     try:
-        pipeline = [
-            {
-                "$group": {
-                    "_id": {
-                        "site_category_lv1": "$site_category_lv1",
-                        "site_category_lv2": "$site_category_lv2"
-                    },
-                    "contagem": {"$sum": 1},
-                }
-            },
-            {
-                "$sort": {"_id.categoria_lv1": 1}
+        pipeline = [{
+            "$group": {
+            "_id": "$site_category_lv1",
+                "count": {"$sum": 1}  # Calculate total reviews per level 1 category
             }
-        ]
+        },
+        {
+            "$sort": {"count": -1}  # Sort by count descending (most to least reviews)
+        },
+        {
+            "$limit": 10  # Limit to top 10 categories
+        }]
+
         documents = client.db.css.aggregate(pipeline)
         result = {"list": list(documents)}
 
