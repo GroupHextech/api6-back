@@ -12,40 +12,19 @@ from ..database import mongodb
 
 blueprint_css = Blueprint("css", __name__, url_prefix="/css")
 
-@blueprint_css.route('/all')
-def get_all():
-    try:
-        pipeline = [
-            {
-                "$group": {
-                    "_id": {
-                        "submission_date": "$submission_date",
-                        "reviewer_id": "$reviewer_id",
-                        "product_id": "$product_id",
-                        "product_name": "$product_name",
-                        "product_brand": "$product_brand",
-                        "site_category_lv1": "$site_category_lv1",
-                        "site_category_lv2": "$site_category_lv2",
-                        "review_title": "$review_title",
-                        "overall_rating": "$overall_rating",
-                        "recommend_to_a_friend": "$recommend_to_a_friend",
-                        "review_text": "$review_text",
-                        "reviewer_birth_year": "$reviewer_birth_year",
-                        "reviewer_gender": "$reviewer_gender",
-                        "reviewer_state": "$reviewer_state"
-                    },
-                }
-            },
-            {
-                "$sort": {"_id.submission_date": -1}
-            }
-        ]
-        documents = client.db.css.aggregate(pipeline)
-        result = {"list": list(documents)}
+@blueprint_css.route('/test')
+def test_route():
+    # Carregar o modelo de análise de sentimentos
+    sentiment_model = load_sentiment_model(model_path)
 
-        return jsonify(result)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Verificar se o modelo foi carregado corretamente
+    if sentiment_model is not None:
+        # Fazer uma previsão de exemplo
+        exemplo_texto = "Este é um ótimo dia!"
+        resultado = sentiment_model.predict([exemplo_texto])
+        return jsonify({"resultado": resultado.tolist()})  # Converter para lista para serialização JSON
+    else:
+        return jsonify({"erro": "O modelo não foi carregado corretamente."})
 
 @blueprint_css.route('/categories')
 def get_categories():

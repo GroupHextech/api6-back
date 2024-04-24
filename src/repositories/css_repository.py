@@ -1,32 +1,11 @@
-from ..database.mongodb import *
+import joblib
 
+model_path = "D:\Codigos\Fatec\api6\HEXTECH-API6sem\api6-back\machineLearning\modelo_e_vetorizador.joblib"
 
-def get_all_documents():
-    collection_css = client.db.css
-    documents = collection_css.find({})
-    return documents
-
-def get_categories_documents():
-    collection_css = client.db.css
-    documents = collection_css.find({'site_category_lv1': {'$exists': True}, 'site_category_lv2': {'$exists': True}})
-    return documents
-
-def get_gender_documents():
-    collection_css = client.db.css
-    documents = collection_css.find({'reviewer_gender': {'$exists': True}})
-    return documents
-
-def get_date_documents():
-    collection_css = client.db.css
-    documents = collection_css.find({'submission_date': {'$exists': True}})
-    return documents
-
-def get_state_documents():
-    collection_css = client.db.css
-    documents = collection_css.find({'reviewer_state': {'$exists': True}})
-    return documents
-
-def get_birth_year_documents():
-    collection_css = client.db.css
-    documents = collection_css.find({'reviewer_birth_year': {'$exists': True}})
-    return documents
+def load_sentiment_model(model_path):
+    try:
+        model = joblib.load(model_path)
+        return model
+    except FileNotFoundError:
+        print("Arquivo de modelo não encontrado.")
+        return None
