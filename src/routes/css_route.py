@@ -7,24 +7,33 @@ import json
 from io import BytesIO
 from bson import json_util, ObjectId
 from src.repositories.css_repository import *
-from ..database import mongodb
+from src.repositories.ml_repository import *
 
 
 blueprint_css = Blueprint("css", __name__, url_prefix="/css")
 
 @blueprint_css.route('/test')
 def test_route():
-    # Carregar o modelo de análise de sentimentos
-    sentiment_model = load_sentiment_model(model_path)
+    # Load the sentiment model and vectorizer
+    modelo_carregado, vetorizador_carregado = load_sentiment_model()
 
-    # Verificar se o modelo foi carregado corretamente
-    if sentiment_model is not None:
-        # Fazer uma previsão de exemplo
-        exemplo_texto = "Este é um ótimo dia!"
-        resultado = sentiment_model.predict([exemplo_texto])
-        return jsonify({"resultado": resultado.tolist()})  # Converter para lista para serialização JSON
-    else:
-        return jsonify({"erro": "O modelo não foi carregado corretamente."})
+    # Define test comments
+    testes = [
+        'Esse produto é muito bom',
+        'Esse produto é muito ruim',
+        'a melhor compra que fiz',
+        'Odiei e quero devolução',
+        'Recebi o produto',
+        'Compra entregue ontem, ainda vou testar'
+    ]
+
+    # Use the loaded model and vectorizer to make predictions
+    freq_testes = vetorizador_carregado.transform(testes)
+    previsoes = modelo_carregado.predict(freq_testes)
+
+    # Convert the predictions to a list and return as a JSON response
+    previsoes_list = previsoes.tolist()
+    return jsonify(previsoes_list)
 
 @blueprint_css.route('/categories')
 def get_categories():
@@ -48,7 +57,6 @@ def get_categories():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @blueprint_css.route('/gender')
 def get_gender():
