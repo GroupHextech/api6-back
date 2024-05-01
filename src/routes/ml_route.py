@@ -39,13 +39,13 @@ def get_feeling():
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
 
-        model_ngrams, ngram_vectorizer, df_values, df_values_count = load_sentiment_model()
+        model_ngrams, ngram_vectorizer, df_combined = load_sentiment_model()
 
         # Converter df_results_true_count para um dicionário
-        sentiment_dict = df_values.to_dict()
+        df_combined = df_combined.to_dict()
 
         # Retornar o dicionário como JSON
-        return jsonify(sentiment_dict)
+        return jsonify(df_combined)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -75,13 +75,16 @@ def get_feeling_count():
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
 
-        model_ngrams, ngram_vectorizer, df_values, df_values_count = load_sentiment_model()
+        model_ngrams, ngram_vectorizer, df_combined = load_sentiment_model()
+
+        # Contagem de valores para 'Feeling_Predicted'
+        feeling_predicted_counts = df_combined['Feeling_Predicted'].value_counts()
 
         # Converter df_results_true_count para um dicionário
-        sentiment_counts_dict = df_values_count.to_dict()
+        df_combined = feeling_predicted_counts .to_dict()
 
         # Retornar o dicionário como JSON
-        return jsonify(sentiment_counts_dict)
+        return jsonify(feeling_predicted_counts)
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

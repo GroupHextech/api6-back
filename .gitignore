@@ -7,3 +7,4 @@ src/schema/__pycache__
 __pycache__/
 /__pycache__
 **/.myenv
+machineLearning/modelo_e_vetorizador.joblib
