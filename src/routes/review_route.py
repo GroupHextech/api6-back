@@ -337,3 +337,61 @@ def get_feeling():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+@blueprint_review.route('/feeling_by_month')
+def get_feeling_by_month():
+  try:
+    state_params = request.args.getlist('state')
+    region_param = request.args.get('region')
+    filter_query = {}
+
+    if region_param:
+      state_params = []
+      if region_param == 'sudeste':
+        state_params = ['SP', 'MG', 'RJ', 'ES']
+      elif region_param == 'sul':
+        state_params = ['PR', 'RS', 'SC']
+      elif region_param == 'centro-oeste':
+        state_params = ['DF', 'GO', 'MT', 'MS']
+      elif region_param == 'norte':
+        state_params = ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO']
+      elif region_param == 'nordeste':
+        state_params = ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'RN', 'SE']
+      else:
+        state_params = []
+
+    if state_params:
+      filter_query['reviewer_state'] = {"$in": state_params}
+
+    # Create a new pipeline for grouping by month
+    pipeline = [
+        {
+            "$addFields": {
+                "submission_month": {
+                    "$dateFromString": {
+                        "dateString": "$submission_date",
+                        "format": "%Y-%m-%d %H:%M:%S"
+                    }
+                }
+            }
+        },
+        {
+            "$group": {
+                "_id": {"$dateToString": {"format": "%b", "date": "$submission_month"}},
+                "Negative": {"$sum": {"$cond": [{"$eq": ["$Feeling_True", "Negative"]}, 1, 0]}},
+                "Neutral": {"$sum": {"$cond": [{"$eq": ["$Feeling_True", "Neutral"]}, 1, 0]}},
+                "Positive": {"$sum": {"$cond": [{"$eq": ["$Feeling_True", "Positive"]}, 1, 0]}}
+            }
+        },
+        {
+            "$sort": {"_id": 1}
+        }
+    ]
+
+    documents = client.db.review.aggregate(pipeline)
+    result = {"list": list(documents)}
+
+    return jsonify(result)
+  except Exception as e:
+    return jsonify({"error": str(e)}), 500
