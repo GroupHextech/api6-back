@@ -1,4 +1,4 @@
-from .css_route import blueprint_css
+from .review_route import blueprint_review
 
 
-__all__ = ["blueprint_css"]
+__all__ = ["blueprint_review"]
