@@ -10,13 +10,14 @@ from src.repositories.review_repository import *
 from ..database import mongodb
 
 
-blueprint_review = Blueprint("review", __name__, url_prefix="/review")
+blueprint_review = Blueprint("review", __name__, url_prefix="/api")
 
 @blueprint_review.route('/categories')
 def get_categories():
     try:
         state_params = request.args.getlist('state')
         region_param = request.args.get('region')
+        feeling_param = request.args.get('feeling')
         #print (state_params)
         filter_query = {}
 
@@ -37,6 +38,9 @@ def get_categories():
 
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
+        
+        if feeling_param:   
+            filter_query['Feeling_Predicted'] = feeling_param
 
         pipeline = [
         {
@@ -67,6 +71,7 @@ def get_gender():
     try:
         state_params = request.args.getlist('state')
         region_param = request.args.get('region')
+        feeling_param = request.args.get('feeling')
         #print (state_params)
         filter_query = {}
 
@@ -87,6 +92,9 @@ def get_gender():
 
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
+        
+        if feeling_param:  # Novo filtro baseado no parâmetro "feeling"
+            filter_query['Feeling_Predicted'] = feeling_param
 
         pipeline = [
         {
@@ -113,6 +121,7 @@ def get_date():
     try:
         state_params = request.args.getlist('state')
         region_param = request.args.get('region')
+        feeling_param = request.args.get('feeling')
         #print (state_params)
         filter_query = {}
 
@@ -133,6 +142,9 @@ def get_date():
 
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
+        
+        if feeling_param:   
+            filter_query['Feeling_Predicted'] = feeling_param
             
         pipeline = [
         {
@@ -159,6 +171,7 @@ def get_state():
     try:
         state_params = request.args.getlist('state')
         region_param = request.args.get('region')
+        feeling_param = request.args.get('feeling')
         #print (state_params)
         filter_query = {}
 
@@ -179,6 +192,9 @@ def get_state():
 
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
+        
+        if feeling_param:   
+            filter_query['Feeling_Predicted'] = feeling_param
 
         pipeline = [
         {
@@ -205,6 +221,7 @@ def get_birth_year():
     try:
         state_params = request.args.getlist('state')
         region_param = request.args.get('region')
+        feeling_param = request.args.get('feeling')
         #print (state_params)
         filter_query = {}
 
@@ -225,6 +242,9 @@ def get_birth_year():
         
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
+        
+        if feeling_param:   
+            filter_query['Feeling_Predicted'] = feeling_param
 
         pipeline = [
         {
@@ -251,6 +271,7 @@ def get_feeling_ml():
     try:
         state_params = request.args.getlist('state')
         region_param = request.args.get('region')
+        feeling_param = request.args.get('feeling')
         #print (state_params)
         filter_query = {}
 
@@ -271,6 +292,9 @@ def get_feeling_ml():
         
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
+        
+        if feeling_param:   
+            filter_query['Feeling_Predicted'] = feeling_param
 
         pipeline = [
         {
@@ -297,6 +321,7 @@ def get_feeling():
     try:
         state_params = request.args.getlist('state')
         region_param = request.args.get('region')
+        feeling_param = request.args.get('feeling')
         #print (state_params)
         filter_query = {}
 
@@ -317,6 +342,9 @@ def get_feeling():
         
         if state_params:
             filter_query['reviewer_state']={"$in": state_params}
+        
+        if feeling_param:   
+            filter_query['Feeling_Predicted'] = feeling_param
 
         pipeline = [
         {
@@ -324,7 +352,7 @@ def get_feeling():
         },
         {
             "$group": {
-            "_id": "$Feeling_True",
+            "_id": "$Feeling_Predicted",
             "count": {"$sum": 1}
             }
         },
