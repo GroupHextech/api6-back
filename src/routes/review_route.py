@@ -372,6 +372,7 @@ def get_feeling_by_month():
   try:
     state_params = request.args.getlist('state')
     region_param = request.args.get('region')
+    feeling_param = request.args.get('feeling')
     filter_query = {}
 
     if region_param:
@@ -392,6 +393,9 @@ def get_feeling_by_month():
     if state_params:
       filter_query['reviewer_state'] = {"$in": state_params}
 
+    if feeling_param:   
+      filter_query['Feeling_Predicted'] = feeling_param
+
     # Create a new pipeline for grouping by month
     pipeline = [
         {
@@ -405,15 +409,18 @@ def get_feeling_by_month():
             }
         },
         {
+            "$match": filter_query 
+        },
+        {
             "$group": {
                 "_id": {"$dateToString": {"format": "%b", "date": "$submission_month"}},
-                "Negative": {"$sum": {"$cond": [{"$eq": ["$Feeling_True", "Negative"]}, 1, 0]}},
-                "Neutral": {"$sum": {"$cond": [{"$eq": ["$Feeling_True", "Neutral"]}, 1, 0]}},
-                "Positive": {"$sum": {"$cond": [{"$eq": ["$Feeling_True", "Positive"]}, 1, 0]}}
+                "Negative": {"$sum": {"$cond": [{"$eq": ["$Feeling_Predicted", "Negative"]}, 1, 0]}},
+                "Neutral": {"$sum": {"$cond": [{"$eq": ["$Feeling_Predicted", "Neutral"]}, 1, 0]}},
+                "Positive": {"$sum": {"$cond": [{"$eq": ["$Feeling_Predicted", "Positive"]}, 1, 0]}}
             }
         },
         {
-            "$sort": {"_id": 1}
+            "$sort": {"submission_month": 1}
         }
     ]
 
