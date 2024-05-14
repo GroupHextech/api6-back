@@ -376,25 +376,25 @@ def get_feeling_by_month():
     filter_query = {}
 
     if region_param:
-      state_params = []
-      if region_param == 'sudeste':
-        state_params = ['SP', 'MG', 'RJ', 'ES']
-      elif region_param == 'sul':
-        state_params = ['PR', 'RS', 'SC']
-      elif region_param == 'centro-oeste':
-        state_params = ['DF', 'GO', 'MT', 'MS']
-      elif region_param == 'norte':
-        state_params = ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO']
-      elif region_param == 'nordeste':
-        state_params = ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'RN', 'SE']
-      else:
         state_params = []
-
+        if region_param == 'sudeste':
+            state_params = ['SP', 'MG', 'RJ', 'ES']
+        elif region_param == 'sul':
+            state_params = ['PR', 'RS', 'SC']
+        elif region_param == 'centro-oeste':
+            state_params = ['DF', 'GO', 'MT', 'MS']
+        elif region_param == 'norte':
+            state_params = ['AC', 'AP', 'AM', 'PA', 'RO', 'RR', 'TO']
+        elif region_param == 'nordeste':
+            state_params = ['AL', 'BA', 'CE', 'MA', 'PB', 'PE', 'RN', 'SE']
+        else:
+            state_params = []
+    
     if state_params:
-      filter_query['reviewer_state'] = {"$in": state_params}
-
+        filter_query['reviewer_state']={"$in": state_params}
+    
     if feeling_param:   
-      filter_query['Feeling_Predicted'] = feeling_param
+        filter_query['Feeling_Predicted'] = feeling_param
 
     # Create a new pipeline for grouping by month
     pipeline = [
@@ -420,7 +420,26 @@ def get_feeling_by_month():
             }
         },
         {
-            "$sort": {"submission_month": 1}
+            "$addFields": {
+                "month_order": {
+                    "$switch": {
+                        "branches": [
+                            {"case": {"$eq": ["$_id", "Jan"]}, "then": 1},
+                            {"case": {"$eq": ["$_id", "Feb"]}, "then": 2},
+                            {"case": {"$eq": ["$_id", "Mar"]}, "then": 3},
+                            {"case": {"$eq": ["$_id", "Apr"]}, "then": 4},
+                            {"case": {"$eq": ["$_id", "May"]}, "then": 5}
+                        ],
+                        "default": 0
+                    }
+                }
+            }
+        },
+        {
+            "$sort": {"month_order": 1}
+        },
+        {
+            "$project": {"Negative": 1, "Neutral": 1, "Positive": 1}
         }
     ]
 
