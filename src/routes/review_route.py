@@ -449,3 +449,21 @@ def get_feeling_by_month():
     return jsonify(result)
   except Exception as e:
     return jsonify({"error": str(e)}), 500
+  
+@blueprint_review.route('/word-frequency')
+def word_frequency():
+    try:
+        # Obtém os parâmetros de consulta
+        feeling_param = request.args.get('feeling')
+        state_param = request.args.get('state')
+
+        # Obtém a frequência das palavras usando a função do repositório
+        word_frequency_result = calculate_word_frequency(feeling=feeling_param, state=state_param)
+        
+        # Converte a lista de tuplas para um dicionário
+        word_frequency_dict = dict(word_frequency_result)
+        
+        # Retorna a frequência das palavras como JSON
+        return jsonify(word_frequency_dict)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
