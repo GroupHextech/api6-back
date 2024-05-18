@@ -8,6 +8,7 @@ from io import BytesIO
 from bson import json_util, ObjectId
 from src.repositories.review_repository import *
 from ..database import mongodb
+from werkzeug.exceptions import BadRequest
 
 
 blueprint_review = Blueprint("review", __name__, url_prefix="/api")
@@ -457,13 +458,34 @@ def word_frequency():
         feeling_param = request.args.get('feeling')
         state_param = request.args.get('state')
 
-        # Obtém a frequência das palavras usando a função do repositório
-        word_frequency_result = cached_calculate_word_frequency(feeling=feeling_param, state=state_param)
-        
-        # Converte a lista de tuplas para um dicionário
-        word_frequency_dict = dict(word_frequency_result)
-        
-        # Retorna a frequência das palavras como JSON
-        return jsonify(word_frequency_dict)
+        # Verificar se os resultados pré-computados estão disponíveis
+        precomputed_result = client.db.precomputed_results.find_one({
+            'type': 'word_frequency',
+            'feeling': feeling_param,
+            'state': state_param
+        })
+
+        if precomputed_result:
+            # Se os resultados pré-computados estiverem disponíveis, retornar esses resultados
+            word_frequency_result = precomputed_result['result']
+            word_frequency_dict = dict(word_frequency_result)
+            return jsonify(word_frequency_dict)
+        else:
+            # Se não houver resultados pré-computados, calcular os resultados e retorná-los
+            word_frequency_result = cached_calculate_word_frequency(feeling=feeling_param, state=state_param)
+            word_frequency_dict = dict(word_frequency_result)
+
+            client.db.precomputed_results.insert_one({
+                'type': 'word_frequency',
+                'feeling': feeling_param,
+                'state': state_param,
+                'result': word_frequency_dict
+            })
+            
+            return jsonify(word_frequency_dict)
+
+    except BadRequest as e:
+        return make_response(jsonify({'error': str(e)}), 400)
+
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return make_response(jsonify({'error': str(e)}), 500)
