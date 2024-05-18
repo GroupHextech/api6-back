@@ -458,7 +458,7 @@ def word_frequency():
         state_param = request.args.get('state')
 
         # Obtém a frequência das palavras usando a função do repositório
-        word_frequency_result = calculate_word_frequency(feeling=feeling_param, state=state_param)
+        word_frequency_result = cached_calculate_word_frequency(feeling=feeling_param, state=state_param)
         
         # Converte a lista de tuplas para um dicionário
         word_frequency_dict = dict(word_frequency_result)
