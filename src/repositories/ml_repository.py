@@ -5,18 +5,15 @@ import unicodedata
 import numpy as np
 import pandas as pd
 from joblib import load
-import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
 
 # carrega o modelo e vetorizador
 def load_sentiment_model(caminho_modelo):
-    #define modelo como "model_ngrams" e vetorizador como "ngram_vectorizer" e carrega de acordo local do seu arquivo
-    model_ngrams, ngram_vectorizer = load(caminho_modelo)
-    return model_ngrams, ngram_vectorizer
+    #define modelo como "xgboost" e vetorizador como "ngram_vectorizer" e carrega de acordo local do seu arquivo
+    xgboost, ngram_vectorizer = load(caminho_modelo)
+    return xgboost, ngram_vectorizer
 
 # formata o texto para melhorar resultado do modelo
 def formatar_csv(caminho_csv):
@@ -26,7 +23,7 @@ def formatar_csv(caminho_csv):
     dataset['review_text'] = dataset['review_text'].fillna('')
 
     # Cria uma coluna para arzenas sentimentos antes de serem passados no modelo
-    dataset['feeling'] = np.where(dataset['overall_rating'] < 3, 'Negative', np.where(dataset['overall_rating'] == 3, 'Neutral', 'Positive'))
+    dataset['feeling'] = np.where(dataset['overall_rating'] < 3, 0, np.where(dataset['overall_rating'] == 3, 1, 2))
 
     # Pré-processamento dos dados
     lemmatizer = WordNetLemmatizer()
@@ -34,6 +31,7 @@ def formatar_csv(caminho_csv):
 
     preprocessed_texts = []  # Lista para armazenar os textos pré-processados
 
+    # Itera sobre cada texto no dataset para pré-processamento
     for text in dataset['review_text']:
         if isinstance(text, str):  # Verifica se o texto é uma string
             # Converter para minúsculas
@@ -56,7 +54,6 @@ def formatar_csv(caminho_csv):
             preprocessed_text = ' '.join(tokens)
             preprocessed_texts.append(preprocessed_text)  # Adicionar texto pré-processado à lista
         else:
-            #pula linhas em branco sem alterar o tamnaho do csv
             preprocessed_texts.append("")
 
     # Atualiza o DataFrame com os textos pré-processados
@@ -69,7 +66,7 @@ def formatar_csv(caminho_csv):
 
 def add_feelings(caminho_modelo, caminho_csv):
     # Carrega o modelo
-    model_ngrams, ngram_vectorizer = load_sentiment_model(caminho_modelo)
+    xgboost, ngram_vectorizer = load_sentiment_model(caminho_modelo)
 
     # Carrega o CSV
     dataset = pd.read_csv(caminho_csv)
@@ -94,7 +91,7 @@ def add_feelings(caminho_modelo, caminho_csv):
     X_ngrams = ngram_vectorizer.transform(X)
 
     # Prever as classes para os dados de teste
-    Y_pred = model_ngrams.predict(X_ngrams)
+    Y_pred = xgboost.predict(X_ngrams)
 
     # Criar um DataFrame com as previsões e as verdadeiras classes de "feeling"
     df_results = pd.DataFrame({'Feeling_Predicted': Y_pred, 'Feeling_True': Y})
@@ -102,10 +99,17 @@ def add_feelings(caminho_modelo, caminho_csv):
     # Adiciona as duas colunas geradas no fim do CSV original.
     uniao = pd.concat([dataset, df_results], axis=1)
 
+    # Mapeamento dos valores numéricos para os rótulos de sentimentos
+    mapping = {0: 'Negativo', 1: 'Neutro', 2: 'Positivo'}
+
+    # Substituir os valores na coluna Feeling_Predicted e Feeling_True
+    uniao['Feeling_Predicted'] = uniao['Feeling_Predicted'].replace(mapping)
+    uniao['Feeling_True'] = uniao['Feeling_True'].replace(mapping)
+
     # Salva o CSV com resultado do ML
     uniao.to_csv("C:\\csv_completo.csv", index=False)
 
 add_feelings(
-    "C:\\Users\\augus\\Documents\\VsCode\\fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_e_vetorizador.joblib",
+    "D:\\Codigos\\Fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_xg_boost.joblib",
     "C:\\fatec\\B2W-Reviews01\\B2W-Reviews01.csv"
 )
