@@ -1,9 +1,11 @@
 # Imports necessários
+from ..database.mongodb import *
 import re
 import string
 import unicodedata
 import numpy as np
 import pandas as pd
+import csv
 from joblib import load
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -102,12 +104,26 @@ def add_feelings(caminho_modelo, caminho_csv):
     # Mapeamento dos valores numéricos para os rótulos de sentimentos
     mapping = {0: 'Negativo', 1: 'Neutro', 2: 'Positivo'}
 
+    # Converte campos misturados para texto
+    uniao['product_id'] = uniao['product_id'].astype(str)
+    uniao['product_name'] = uniao['product_name'].astype(str)
+    uniao['review_title'] = uniao['review_title'].astype(str)
+
     # Substituir os valores na coluna Feeling_Predicted e Feeling_True
     uniao['Feeling_Predicted'] = uniao['Feeling_Predicted'].replace(mapping)
     uniao['Feeling_True'] = uniao['Feeling_True'].replace(mapping)
 
     # Salva o CSV com resultado do ML
     uniao.to_csv("C:\\csv_completo.csv", index=False)
+
+# Função para adicionar o csv no mongo
+def insert_csv_to_mongodb(caminho_csv):
+    collection_review = client.db.test
+
+    with open(caminho_csv, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            collection_review.insert_one(row)
 
 add_feelings(
     "D:\\Codigos\\Fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_xg_boost.joblib",
