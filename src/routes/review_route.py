@@ -8,6 +8,7 @@ from io import BytesIO
 from bson import json_util, ObjectId
 from src.repositories.review_repository import *
 from ..database import mongodb
+from werkzeug.exceptions import BadRequest
 
 
 blueprint_review = Blueprint("review", __name__, url_prefix="/api")
@@ -449,3 +450,42 @@ def get_feeling_by_month():
     return jsonify(result)
   except Exception as e:
     return jsonify({"error": str(e)}), 500
+  
+@blueprint_review.route('/word-frequency')
+def word_frequency():
+    try:
+        # Obtém os parâmetros de consulta
+        feeling_param = request.args.get('feeling')
+        state_param = request.args.get('state')
+
+        # Verificar se os resultados pré-computados estão disponíveis
+        precomputed_result = client.db.precomputed_results.find_one({
+            'type': 'word_frequency',
+            'feeling': feeling_param,
+            'state': state_param
+        })
+
+        if precomputed_result:
+            # Se os resultados pré-computados estiverem disponíveis, retornar esses resultados
+            word_frequency_result = precomputed_result['result']
+            word_frequency_dict = dict(word_frequency_result)
+            return jsonify(word_frequency_dict)
+        else:
+            # Se não houver resultados pré-computados, calcular os resultados e retorná-los
+            word_frequency_result = cached_calculate_word_frequency(feeling=feeling_param, state=state_param)
+            word_frequency_dict = dict(word_frequency_result)
+
+            client.db.precomputed_results.insert_one({
+                'type': 'word_frequency',
+                'feeling': feeling_param,
+                'state': state_param,
+                'result': word_frequency_dict
+            })
+            
+            return jsonify(word_frequency_dict)
+
+    except BadRequest as e:
+        return make_response(jsonify({'error': str(e)}), 400)
+
+    except Exception as e:
+        return make_response(jsonify({'error': str(e)}), 500)
