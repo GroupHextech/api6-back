@@ -1,5 +1,4 @@
 from flask import Blueprint, jsonify, redirect, request, make_response
-from repositories import ml_repository
 import requests
 import time
 import os
@@ -8,6 +7,7 @@ import json
 from io import BytesIO
 from bson import json_util, ObjectId
 from src.repositories.review_repository import *
+from src.repositories.ml_repository import *
 from ..database import mongodb
 from werkzeug.exceptions import BadRequest
 
@@ -492,6 +492,30 @@ def word_frequency():
         return make_response(jsonify({'error': str(e)}), 500)
 
 # Rota para processar o upload do CSV no Blueprint
-#@blueprint_review.route('/csv', methods=['POST'])
-#def upload_csv():
+@blueprint_review.route('/csv', methods=['POST'])
+def upload_csv():
+    # Check if file is present in the request
+    if 'file' not in request.files:
+        return "No file part"
 
+    file = request.files['file']
+
+    # If the user does not select a file, the browser submits an empty file without a filename
+    if file.filename == '':
+        return "No selected file"
+
+    if file:
+        # Save the file to a temporary location
+        file_path = "temp.csv"
+        file.save(file_path)
+
+        # Call add_feelings function with appropriate arguments
+        add_feelings(
+            "D:\\Codigos\\Fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_xg_boost.joblib",
+            file_path
+        )
+
+        os.remove(file_path)
+
+        return "File uploaded and processed successfully"
+    return "Something went wrong"
