@@ -492,16 +492,6 @@ def word_frequency():
         return make_response(jsonify({'error': str(e)}), 500)
 
 # Rota para processar o upload do CSV no Blueprint
-@blueprint_review.route('/csv', methods=['POST'])
-def upload_csv():
-    if 'file' not in request.files:
-        return redirect(request.url)
-    file = request.files['file']
-    if file.filename == '':
-        return redirect(request.url)
-    if file:
-        filepath = os.path.join('uploads', file.filename)
-        file.save(filepath)
-        ml_repository.insert_csv_to_mongodb(filepath)
-        os.remove(filepath)  # Remover o arquivo após a inserção
-        return 'Arquivo CSV enviado e inserido no MongoDB com sucesso!'
+#@blueprint_review.route('/csv', methods=['POST'])
+#def upload_csv():
+

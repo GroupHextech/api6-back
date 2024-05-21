@@ -1,5 +1,4 @@
 # Imports necessários
-from ..database.mongodb import *
 import re
 import string
 import unicodedata
@@ -10,6 +9,7 @@ from joblib import load
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
+from ..database.mongodb import *
 
 # carrega o modelo e vetorizador
 def load_sentiment_model(caminho_modelo):
@@ -66,6 +66,13 @@ def formatar_csv(caminho_csv):
 
     return dataset
 
+# Função para adicionar o csv no mongo
+def insert_csv_to_mongodb(filepath):
+    with open(filepath, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            collection_review = client.db.test.insert_one(row)
+
 def add_feelings(caminho_modelo, caminho_csv):
     # Carrega o modelo
     xgboost, ngram_vectorizer = load_sentiment_model(caminho_modelo)
@@ -116,16 +123,11 @@ def add_feelings(caminho_modelo, caminho_csv):
     # Salva o CSV com resultado do ML
     uniao.to_csv("C:\\csv_completo.csv", index=False)
 
-# Função para adicionar o csv no mongo
-def insert_csv_to_mongodb(caminho_csv):
-    collection_review = client.db.test
+    # Envia novo csv para o mongo
+    insert_csv_to_mongodb("C:\\csv_completo.csv")
 
-    with open(caminho_csv, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            collection_review.insert_one(row)
 
 add_feelings(
-    "D:\\Codigos\\Fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_xg_boost.joblib",
+    "C:\\Users\\augus\\Documents\\VsCode\\fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_xg_boost.joblib",
     "C:\\fatec\\B2W-Reviews01\\B2W-Reviews01.csv"
 )
