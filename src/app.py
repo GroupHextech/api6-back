@@ -2,7 +2,7 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 import warnings
 import os
-from .routes import blueprint_review, blueprint_user
+from .routes import blueprint_review, blueprint_blacklist
 from .database import mongodb, firebase
 from dotenv import load_dotenv
 import firebase_admin
@@ -19,7 +19,7 @@ CORS(app)
 
 # Register blueprint
 app.register_blueprint(blueprint_review)
-app.register_blueprint(blueprint_user)
+app.register_blueprint(blueprint_blacklist)
 
 # Inicia o Mongo
 mongodb.init_db(app)

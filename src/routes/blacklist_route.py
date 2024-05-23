@@ -3,9 +3,9 @@ from ..database import firebase
 from werkzeug.exceptions import BadRequest
 
 # Crie um blueprint para a rota de blacklist
-blueprint_user = Blueprint("blacklist", __name__, url_prefix="/blacklist")
+blueprint_blacklist = Blueprint("blacklist", __name__, url_prefix="/blacklist")
 
-@blueprint_user.route('/all', methods=['GET'])
+@blueprint_blacklist.route('/all', methods=['GET'])
 def get_all():
     # Referência para a coleção 'blacklist'
     db = firebase.firestore()
