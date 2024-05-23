@@ -6,7 +6,7 @@ from .routes import blueprint_review, blueprint_blacklist
 from .database import mongodb, firebase
 from dotenv import load_dotenv
 import firebase_admin
-from firebase_admin import credentials
+from firebase_admin import credentials, firestore
 
 # Load environment variables from .env file
 load_dotenv()
@@ -25,7 +25,7 @@ app.register_blueprint(blueprint_blacklist)
 mongodb.init_db(app)
 
 # Inicia o Firebase
-firebase_admin.initialize_app(firebase.cred)
+firebase.init_firestore()
 
 if __name__ == "__main__":
     app.run()
