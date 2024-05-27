@@ -7,4 +7,6 @@ src/schema/__pycache__
 __pycache__/
 /__pycache__
 **/.myenv
-machineLearning/modelo_e_vetorizador.joblib
+machineLearning/modelo_naive_bayes.joblib
+machineLearning/modelo_textblob.joblib
+machineLearning/modelo_catboost.joblib
