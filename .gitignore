@@ -9,3 +9,4 @@ __pycache__/
 **/.myenv
 machineLearning/modelo_naive_bayes.joblib
 machineLearning/modelo_textblob.joblib
+machineLearning/modelo_catboost.joblib
