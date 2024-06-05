@@ -9,7 +9,7 @@ from joblib import load
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-from ..database.mongodb import client
+from src.database.mongodb import client
 
 def load_sentiment_model(caminho_modelo):
     xgboost, ngram_vectorizer = load(caminho_modelo)
@@ -18,11 +18,18 @@ def load_sentiment_model(caminho_modelo):
 def formatar_csv(caminho_csv):
     dataset = pd.read_csv(caminho_csv, encoding='utf-8', low_memory=False, dtype=str)
 
-    dataset['review_text'] = dataset['review_text'].fillna('')
+    # Preencher valores vazios em todas as colunas com strings vazias
+    dataset = dataset.fillna('')
 
+    # Converter coluna 'overall_rating' para float e tratar valores inválidos
+    dataset['overall_rating'] = pd.to_numeric(dataset['overall_rating'], errors='coerce')
+    dataset = dataset.dropna(subset=['overall_rating'])
+    dataset['overall_rating'] = dataset['overall_rating'].astype(float)
+
+    # Criar nova coluna 'feeling' com base na coluna 'overall_rating'
     dataset['feeling'] = np.where(
-        dataset['overall_rating'].astype(float) < 3, 0,
-        np.where(dataset['overall_rating'].astype(float) == 3, 1, 2)
+        dataset['overall_rating'] < 3, 0,
+        np.where(dataset['overall_rating'] == 3, 1, 2)
     )
 
     lemmatizer = WordNetLemmatizer()
@@ -58,7 +65,7 @@ def insert_csv_to_mongodb(filepath):
     with open(filepath, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            client.db.test.insert_one(row)
+            client.db.review.insert_one(row)
 
 def add_feelings(caminho_modelo, caminho_csv):
     xgboost, ngram_vectorizer = load_sentiment_model(caminho_modelo)
@@ -100,7 +107,6 @@ def add_feelings(caminho_modelo, caminho_csv):
     uniao['Feeling_True'] = uniao['Feeling_True'].fillna('')
 
     uniao.to_csv("C:\\csv_completo.csv", index=False, encoding='utf-8')
-    uniao.to_json("C:\\json_completo.json", orient='records', force_ascii=False)
 
     os.remove("C:\\csv_formatado.csv")
 

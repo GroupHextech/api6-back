@@ -496,13 +496,13 @@ def word_frequency():
 def upload_csv():
     # Check if file is present in the request
     if 'file' not in request.files:
-        return "No file part"
+        return "No file part", 400
 
     file = request.files['file']
 
     # If the user does not select a file, the browser submits an empty file without a filename
     if file.filename == '':
-        return "No selected file"
+        return "No selected file", 400
 
     if file:
         # Save the file to a temporary location
@@ -511,11 +511,12 @@ def upload_csv():
 
         # Call add_feelings function with appropriate arguments
         add_feelings(
-            "D:\\Codigos\\Fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_xg_boost.joblib",
+            "C:\\Users\\augus\\Documents\\VsCode\\fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_xg_boost.joblib",
             file_path
         )
 
         os.remove(file_path)
 
-        return "File uploaded and processed successfully"
-    return "Something went wrong"
+        return "File uploaded and processed successfully", 200
+
+    return "Something went wrong", 500
