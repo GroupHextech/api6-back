@@ -3,14 +3,17 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 
+# Carrega as credenciais do Firebase a partir das variáveis de ambiente
+firebase_credentials = os.getenv('FIREBASE_CREDENTIALS')
 
-# caminho cahve firebase
-cred = credentials.Certificate(
-    os.path.join(
-        os.path.dirname(__file__),
-        #r"C:\\temporario\\api6_fatec\\api-sprint3\\api6-back\\src\\firebase.json"
-    )
-)
+if not firebase_credentials:
+    raise ValueError("Credenciais do Firebase não encontradas. Por favor, defina a variável de ambiente 'FIREBASE_CREDENTIALS'.")
+
+# Converte a string JSON para um dicionário Python
+cred_dict = json.loads(firebase_credentials)
+
+# Inicializa as credenciais do Firebase a partir do dicionário
+cred = credentials.Certificate(cred_dict)
 
 firebase_app = firebase_admin.initialize_app(cred)
 
