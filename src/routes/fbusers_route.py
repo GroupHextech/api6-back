@@ -36,6 +36,17 @@ def users_backup():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+
+@blueprint_fbusers.route('/delete', methods=['GET'])
+def users_delete():
+    try:
+        result = firebase.delete_all_users()
+        
+        return jsonify(result), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @blueprint_fbusers.route('/restore')
 def get_users():
     try:
@@ -68,6 +79,9 @@ def get_users():
         # Convertendo o documento para JSON e retornando
         if document:
             document['_id'] = str(document['_id'])  # Convertendo ObjectId para string
-        return jsonify(document), 200
+        
+ 
+        result  = firebase.insert_users_from_json(document)
+        return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
