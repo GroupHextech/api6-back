@@ -21,11 +21,24 @@ def init_firestore():
     fclient = firestore.client(app=firebase_app)
     return fclient
 
+
 def list_collections():
     fclient = init_firestore()
     collections = fclient.collections()
     for collection in collections:
         print(f'Collection ID: {collection.id}')
+
+def get_blacklist():
+    fclient = init_firestore()
+    blacklist_ref = fclient.collection('blacklist')
+    blacklist_stream = blacklist_ref.stream()
+    blacklist_temp = {}
+    for doc in blacklist_stream:
+        blacklist_temp[doc.id] = doc.to_dict()
+    blacklist_json = json.dumps(blacklist_temp, default=str)
+    blacklist_dict =json.loads(blacklist_json)
+    user_ids = [entry['userId'] for entry in blacklist_dict.values()]
+    return user_ids
 
 
 def get_all_users():
@@ -38,6 +51,47 @@ def get_all_users():
     # Convertendo o dicionário para JSON
     all_users_json = json.dumps(all_users, default=str)
     return all_users_json
+
+
+def delete_all_users():
+    fclient = init_firestore()
+    if fclient:
+        try:
+            users_ref = fclient.collection('users')
+            docs = users_ref.stream()
+            for doc in docs:
+                print(f"Deletando usuário com ID: {doc.id}")
+                doc.reference.delete()
+            print("Todos os usuários foram deletados com sucesso.")
+            return "Todos os usuários foram deletados com sucesso."
+        except Exception as e:
+            print(f"Erro ao deletar usuários: {e}")
+
+
+def insert_users_from_json(json_data):     
+    fclient = init_firestore()
+    if fclient:
+        inserted_ids = []
+        try:
+            result_delete = delete_all_users()
+            blacklist = get_blacklist()
+            #data = json.loads(json_data)
+            users_data = json_data.get('data', [])
+            if users_data:
+                for user_batch in users_data:
+                    for user_id, user_info in user_batch.items():
+                        if user_id in blacklist:
+                            print(f"O user_id {user_id} está na lista.")
+                        else:
+                            user_info['createdAt'] = firestore.SERVER_TIMESTAMP if user_info.get('createdAt') is None else user_info['createdAt']
+                            fclient.collection('users').document(user_id).set(user_info)
+                            inserted_ids.append(user_id)
+                            #print(f"Usuário {user_id} adicionado com sucesso.")
+                        
+            return json.dumps(inserted_ids)
+        except Exception as e:
+            print(f"Erro ao inserir usuários: {e}")
+
 
 # Listando todas as coleções
 #list_collections()
