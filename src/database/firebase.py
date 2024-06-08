@@ -3,6 +3,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import json
 
+
 # Carrega as credenciais do Firebase a partir das variáveis de ambiente
 firebase_credentials = os.getenv('FIREBASE_CREDENTIALS')
 
