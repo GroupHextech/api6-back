@@ -28,17 +28,6 @@ def list_collections():
     for collection in collections:
         print(f'Collection ID: {collection.id}')
 
-def get_blacklist():
-    fclient = init_firestore()
-    blacklist_ref = fclient.collection('blacklist')
-    blacklist_stream = blacklist_ref.stream()
-    blacklist_temp = {}
-    for doc in blacklist_stream:
-        blacklist_temp[doc.id] = doc.to_dict()
-    blacklist_json = json.dumps(blacklist_temp, default=str)
-    blacklist_dict =json.loads(blacklist_json)
-    user_ids = [entry['userId'] for entry in blacklist_dict.values()]
-    return user_ids
 
 
 def get_all_users():
@@ -51,7 +40,6 @@ def get_all_users():
     # Convertendo o dicionário para JSON
     all_users_json = json.dumps(all_users, default=str)
     return all_users_json
-
 
 def delete_all_users():
     fclient = init_firestore()
@@ -67,14 +55,27 @@ def delete_all_users():
         except Exception as e:
             print(f"Erro ao deletar usuários: {e}")
 
+def delete_one_user(userid):
+    fclient = init_firestore()
+    if fclient:
+        try:
+            users_ref = fclient.collection('users')
+            docs = users_ref.stream()
+            for doc in docs:
+                if doc.id == userid:
+                    doc.reference.delete()           
+            return "Usuário removido com sucesso."
+        except Exception as e:
+            print(f"Erro ao deletar usuários: {e}")
 
-def insert_users_from_json(json_data):     
+def insert_users_from_json(json_data, blacklist):     
     fclient = init_firestore()
     if fclient:
         inserted_ids = []
         try:
             result_delete = delete_all_users()
-            blacklist = get_blacklist()
+            print(blacklist)
+            print(blacklist)
             #data = json.loads(json_data)
             users_data = json_data.get('data', [])
             if users_data:
@@ -91,6 +92,7 @@ def insert_users_from_json(json_data):
             return json.dumps(inserted_ids)
         except Exception as e:
             print(f"Erro ao inserir usuários: {e}")
+
 
 
 # Listando todas as coleções
