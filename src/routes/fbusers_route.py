@@ -38,6 +38,7 @@ def users_backup():
 
 
 
+
 @blueprint_fbusers.route('/delete', methods=['GET'])
 def users_delete():
     try:
@@ -80,8 +81,43 @@ def get_users():
         if document:
             document['_id'] = str(document['_id'])  # Convertendo ObjectId para string
         
- 
-        result  = firebase.insert_users_from_json(document)
+        blacklist_mongodb = mongodb.client.db.blacklist.find({}, {"_id": 0, "userid": 1})
+        blacklist = [doc["userid"] for doc in blacklist_mongodb]
+		
+        result  = firebase.insert_users_from_json(document,blacklist)
         return jsonify(result), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+
+@blueprint_fbusers.route('/blacklist', methods=['GET'])
+def users_blacklist():
+    try:
+        userid_param = request.args.get('userid')
+
+        # Convertendo os parâmetros para inteiros
+        if userid_param is  None:
+             return jsonify({"error": "O código do usário está vazio."}), 500
+         
+
+        now = datetime.now()
+
+        # Criando o documento com os campos desejados
+        document = {
+            "day": now.day,
+            "month": now.month,
+            "year": now.year,
+            "hour": now.hour,
+            "minute": now.minute,
+            "second": now.second,
+            "userid": userid_param
+        }
+
+        mongodb.client.db.blacklist.insert_one(document)
+               
+        result = firebase.delete_one_user(userid_param, )
+        return jsonify("ok"), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
