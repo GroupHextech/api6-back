@@ -511,7 +511,7 @@ def upload_csv():
 
         # Call add_feelings function with appropriate arguments
         add_feelings(
-            r"C:\Users\augus\Documents\VsCode\fatec\api6\HEXTECH-API6sem\api6-back\src\ml\modelo_xg_boost.joblib",
+            r"D:\Codigos\Fatec\api6\HEXTECH-API6sem\api6-back\src\ml\modelo_xg_boost.joblib",
             file_path
         )
 
