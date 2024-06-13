@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, redirect, request, make_response
+import pandas as pd
 import requests
 import time
 import os
@@ -8,6 +9,7 @@ from io import BytesIO
 from bson import json_util, ObjectId
 from src.repositories.review_repository import *
 from src.repositories.ml_repository import *
+from src.ml.modelo_xg_boost import *
 from ..database import mongodb
 from werkzeug.exceptions import BadRequest
 
@@ -494,28 +496,37 @@ def word_frequency():
 # Rota para processar o upload do CSV no Blueprint
 @blueprint_review.route('/csv', methods=['POST'])
 def upload_csv():
-    # Check if file is present in the request
+    # Verifica se o arquivo está presente
     if 'file' not in request.files:
         return "No file part", 400
 
     file = request.files['file']
 
-    # If the user does not select a file, the browser submits an empty file without a filename
+    # Erro se o nome do arquivo for vazio
     if file.filename == '':
         return "No selected file", 400
 
     if file:
-        # Save the file to a temporary location
+        # Salva o arquivo em um local temporario
         file_path = "temp.csv"
         file.save(file_path)
 
-        # Call add_feelings function with appropriate arguments
+        # Chama a função
         add_feelings(
-            "C:\\Users\\augus\\Documents\\VsCode\\fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_xg_boost.joblib",
+            r"D:\Codigos\Fatec\api6\HEXTECH-API6sem\api6-back\src\ml\modelo_xg_boost.joblib",
             file_path
         )
 
+        #Atualiza a base de treino
+        train = pd.read_csv(r"D:\Codigos\Fatec\api6\HEXTECH-API6sem\api6-back\src\ml\train.csv")
+        temp = pd.read_csv(file_path)
+
         os.remove(file_path)
+
+        train = pd.concat([train, temp], ignore_index=True)
+        train.to_csv(r"D:\Codigos\Fatec\api6\HEXTECH-API6sem\api6-back\src\ml\train.csv")
+
+        retreinar()
 
         return "File uploaded and processed successfully", 200
 

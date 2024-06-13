@@ -5,6 +5,7 @@ import unicodedata
 import numpy as np
 import pandas as pd
 import csv
+import pickle
 from joblib import load
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -18,15 +19,12 @@ def load_sentiment_model(caminho_modelo):
 def formatar_csv(caminho_csv):
     dataset = pd.read_csv(caminho_csv, encoding='utf-8', low_memory=False, dtype=str)
 
-    # Preencher valores vazios em todas as colunas com strings vazias
     dataset = dataset.fillna('')
 
-    # Converter coluna 'overall_rating' para float e tratar valores inválidos
     dataset['overall_rating'] = pd.to_numeric(dataset['overall_rating'], errors='coerce')
     dataset = dataset.dropna(subset=['overall_rating'])
     dataset['overall_rating'] = dataset['overall_rating'].astype(float)
 
-    # Criar nova coluna 'feeling' com base na coluna 'overall_rating'
     dataset['feeling'] = np.where(
         dataset['overall_rating'] < 3, 0,
         np.where(dataset['overall_rating'] == 3, 1, 2)
@@ -53,7 +51,10 @@ def formatar_csv(caminho_csv):
             preprocessed_texts.append("")
 
     dataset['review_text'] = preprocessed_texts
-    dataset.to_csv("C:\\csv_formatado.csv", index=False, encoding='utf-8')
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    formatted_csv_path = os.path.join(script_dir, "csv_formatado.csv")
+    dataset.to_csv(formatted_csv_path, index=False, encoding='utf-8')
 
     return dataset
 
@@ -68,13 +69,15 @@ def insert_csv_to_mongodb(filepath):
             client.db.review.insert_one(row)
 
 def add_feelings(caminho_modelo, caminho_csv):
-    xgboost, ngram_vectorizer = load_sentiment_model(caminho_modelo)
+    xgboost, ngram_vectorizer = load(caminho_modelo)
     dataset = pd.read_csv(caminho_csv, encoding='utf-8', low_memory=False, dtype=str)
     dataset['review_text'] = dataset['review_text'].fillna('')
 
     formatar_csv(caminho_csv)
 
-    dataset_formatado = pd.read_csv("C:\\csv_formatado.csv", encoding='utf-8', low_memory=False, dtype=str)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    formatted_csv_path = os.path.join(script_dir, "csv_formatado.csv")
+    dataset_formatado = pd.read_csv(formatted_csv_path, encoding='utf-8', low_memory=False, dtype=str)
     dataset_formatado['review_text'] = dataset_formatado['review_text'].fillna('')
 
     X = dataset_formatado['review_text'].values
@@ -86,30 +89,25 @@ def add_feelings(caminho_modelo, caminho_csv):
     df_results = pd.DataFrame({'Feeling_Predicted': Y_pred, 'Feeling_True': Y})
     uniao = pd.concat([dataset, df_results], axis=1)
 
-    processar_coluna(uniao, "submission_date")
-    processar_coluna(uniao, "reviewer_id")
-    processar_coluna(uniao, "product_id")
-    processar_coluna(uniao, "product_name")
-    processar_coluna(uniao, "site_category_lv1")
-    processar_coluna(uniao, "site_category_lv2")
-    processar_coluna(uniao, "review_title")
-    processar_coluna(uniao, "recommend_to_a_friend")
-    processar_coluna(uniao, "review_text")
-    processar_coluna(uniao, "reviewer_gender")
-    processar_coluna(uniao, "reviewer_state")
+    columns_to_process = [
+        "submission_date", "reviewer_id", "product_id", "product_name", 
+        "site_category_lv1", "site_category_lv2", "review_title", 
+        "recommend_to_a_friend", "review_text", "reviewer_gender", "reviewer_state"
+    ]
+
+    for column in columns_to_process:
+        processar_coluna(uniao, column)
 
     mapping = {0: 'Negativo', 1: 'Neutro', 2: 'Positivo'}
 
-    uniao['Feeling_Predicted'] = uniao['Feeling_Predicted'].replace(mapping)
-    uniao['Feeling_Predicted'] = uniao['Feeling_Predicted'].fillna('')
+    uniao['Feeling_Predicted'] = uniao['Feeling_Predicted'].replace(mapping).fillna('')
+    uniao['Feeling_True'] = uniao['Feeling_True'].replace(mapping).fillna('')
 
-    uniao['Feeling_True'] = uniao['Feeling_True'].replace(mapping)
-    uniao['Feeling_True'] = uniao['Feeling_True'].fillna('')
+    complete_csv_path = os.path.join(script_dir, "csv_completo.csv")
+    uniao.to_csv(complete_csv_path, index=False, encoding='utf-8')
 
-    uniao.to_csv("C:\\csv_completo.csv", index=False, encoding='utf-8')
+    os.remove(formatted_csv_path)
 
-    os.remove("C:\\csv_formatado.csv")
+    insert_csv_to_mongodb(complete_csv_path)
 
-    insert_csv_to_mongodb("C:\\csv_completo.csv")
-
-    os.remove("C:\\csv_completo.csv")
+    os.remove(complete_csv_path)
