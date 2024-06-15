@@ -6,6 +6,7 @@ import pandas as pd
 import numpy as np
 import nltk
 import pickle
+import nlpaug.augmenter.word as naw
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 from nltk.stem import WordNetLemmatizer
@@ -28,6 +29,23 @@ def retreinar():
     dataset = dataset.dropna(subset=['review_text', 'overall_rating'])
     # Cria uma nova coluna para classificar entre comentários positivos(2), negativos(0) ou neutros(1) com base na nota:
     dataset['feeling'] = np.where(dataset['overall_rating'] < 3, 0, np.where(dataset['overall_rating'] == 3, 1, 2))
+
+    # Filtra os comentários neutros
+    neutral_comments = dataset.loc[dataset['feeling'] == 1]
+
+    # Aumenta os dados (comentários da classe 'Neutro')
+    synonym_aug = naw.SynonymAug(aug_src='wordnet')
+    augmented_comments = []
+
+    for comment in neutral_comments['review_text']:
+        for _ in range(3):  # Gera 3 variações para cada comentário neutro
+            augmented_comment = synonym_aug.augment(comment)
+            new_row = {'review_text': augmented_comment, 'overall_rating': 3, 'feeling': 1}
+            augmented_comments.append(new_row)
+
+    # Adiciona os comentários aumentados ao dataset combinado
+    augmented_comments_df = pd.DataFrame(augmented_comments)
+    dataset = pd.concat([dataset, augmented_comments_df], ignore_index=True)
 
     # Criação da instância do lematizador e das stopwords
     lemmatizer = WordNetLemmatizer()
@@ -79,14 +97,8 @@ def retreinar():
     # Cria uma instância do modelo XGBoost
     xgboost = xgb.XGBClassifier()
 
-    # Calcula os pesos de amostra com base nas classes
-    class_weights = np.zeros(len(Y))
-    class_counts = np.bincount(Y)
-    for i in range(len(class_counts)):
-        class_weights[Y == i] = len(Y) / class_counts[i]
-
     # Treina o modelo XGBoost com pesos de amostra
-    xgboost.fit(X_ngrams, Y, sample_weight=class_weights)
+    xgboost.fit(X_ngrams, Y)
 
     # Salva o modelo e o vetorizador em um único arquivo chamado 'modelo_xg_boost.joblib'
     dump((xgboost, ngram_vectorizer), 'modelo_xg_boost.joblib')
