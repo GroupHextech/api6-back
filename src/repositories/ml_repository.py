@@ -1,111 +1,113 @@
-# Imports necessários
+import os
 import re
 import string
 import unicodedata
 import numpy as np
 import pandas as pd
+import csv
+import pickle
 from joblib import load
-import nltk
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
+from src.database.mongodb import client
 
-# carrega o modelo e vetorizador
 def load_sentiment_model(caminho_modelo):
-    #define modelo como "model_ngrams" e vetorizador como "ngram_vectorizer" e carrega de acordo local do seu arquivo
-    model_ngrams, ngram_vectorizer = load(caminho_modelo)
-    return model_ngrams, ngram_vectorizer
+    xgboost, ngram_vectorizer = load(caminho_modelo)
+    return xgboost, ngram_vectorizer
 
-# formata o texto para melhorar resultado do modelo
 def formatar_csv(caminho_csv):
-    dataset = pd.read_csv(caminho_csv)
+    dataset = pd.read_csv(caminho_csv, encoding='utf-8', low_memory=False, dtype=str)
 
-    # substitue espaços vazios por strings em branco
-    dataset['review_text'] = dataset['review_text'].fillna('')
+    dataset = dataset.fillna('')
 
-    # Cria uma coluna para arzenas sentimentos antes de serem passados no modelo
-    dataset['feeling'] = np.where(dataset['overall_rating'] < 3, 'Negative', np.where(dataset['overall_rating'] == 3, 'Neutral', 'Positive'))
+    dataset['overall_rating'] = pd.to_numeric(dataset['overall_rating'], errors='coerce')
+    dataset = dataset.dropna(subset=['overall_rating'])
+    dataset['overall_rating'] = dataset['overall_rating'].astype(float)
 
-    # Pré-processamento dos dados
+    dataset['feeling'] = np.where(
+        dataset['overall_rating'] < 3, 0,
+        np.where(dataset['overall_rating'] == 3, 1, 2)
+    )
+
     lemmatizer = WordNetLemmatizer()
     stop_words = set(stopwords.words('portuguese'))
 
-    preprocessed_texts = []  # Lista para armazenar os textos pré-processados
+    preprocessed_texts = []
 
     for text in dataset['review_text']:
-        if isinstance(text, str):  # Verifica se o texto é uma string
-            # Converter para minúsculas
+        if isinstance(text, str):
             text = text.lower()
-            # Remover acentos
             text = ''.join(char for char in unicodedata.normalize('NFKD', text) if unicodedata.category(char) != 'Mn')
-            # Remover números usando expressão regular
             text = re.sub(r'\d+', '', text)
-            # Remover caracteres especiais (incluindo emojis)
             text = re.sub(r'[^\w\s]', '', text)
-            # Remover pontuação
             text = text.translate(str.maketrans('', '', string.punctuation))
-            # Remover espaços extras
             text = re.sub(r'\s+', ' ', text).strip()
-            # Tokenização
             tokens = word_tokenize(text)
-            # Lematização e remoção de stopwords
             tokens = [lemmatizer.lemmatize(word) for word in tokens if word.isalpha() and word.lower() not in stop_words]
-            # Juntar tokens em texto novamente
             preprocessed_text = ' '.join(tokens)
-            preprocessed_texts.append(preprocessed_text)  # Adicionar texto pré-processado à lista
+            preprocessed_texts.append(preprocessed_text)
         else:
-            #pula linhas em branco sem alterar o tamnaho do csv
             preprocessed_texts.append("")
 
-    # Atualiza o DataFrame com os textos pré-processados
     dataset['review_text'] = preprocessed_texts
 
-    #cria o csv processado na raiz do disco c
-    dataset.to_csv("C:\\csv_formatado.csv ", index=False)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    formatted_csv_path = os.path.join(script_dir, "csv_formatado.csv")
+    dataset.to_csv(formatted_csv_path, index=False, encoding='utf-8')
 
     return dataset
 
+def processar_coluna(df, column_name):
+    df[column_name] = df[column_name].astype(str)
+    df[column_name] = df[column_name].fillna('')
+
+def insert_csv_to_mongodb(filepath):
+    with open(filepath, newline='', encoding='utf-8') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            client.db.review.insert_one(row)
+
 def add_feelings(caminho_modelo, caminho_csv):
-    # Carrega o modelo
-    model_ngrams, ngram_vectorizer = load_sentiment_model(caminho_modelo)
-
-    # Carrega o CSV
-    dataset = pd.read_csv(caminho_csv)
-
-    # substitue espaços vazios por strings em branco
+    xgboost, ngram_vectorizer = load(caminho_modelo)
+    dataset = pd.read_csv(caminho_csv, encoding='utf-8', low_memory=False, dtype=str)
     dataset['review_text'] = dataset['review_text'].fillna('')
 
-    # Formata o CSV
     formatar_csv(caminho_csv)
 
-    # Carrega o CSV formatado
-    dataset_formatado = pd.read_csv("C:\\csv_formatado.csv")
-
-    # substitue espaços vazios por strings em branco
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    formatted_csv_path = os.path.join(script_dir, "csv_formatado.csv")
+    dataset_formatado = pd.read_csv(formatted_csv_path, encoding='utf-8', low_memory=False, dtype=str)
     dataset_formatado['review_text'] = dataset_formatado['review_text'].fillna('')
 
-    # Separa colunas a serem usadas pelo modelo.
     X = dataset_formatado['review_text'].values
     Y = dataset_formatado['feeling'].values
 
-    # Vetorizar os dados de texto com N-grams
     X_ngrams = ngram_vectorizer.transform(X)
+    Y_pred = xgboost.predict(X_ngrams)
 
-    # Prever as classes para os dados de teste
-    Y_pred = model_ngrams.predict(X_ngrams)
-
-    # Criar um DataFrame com as previsões e as verdadeiras classes de "feeling"
     df_results = pd.DataFrame({'Feeling_Predicted': Y_pred, 'Feeling_True': Y})
-
-    # Adiciona as duas colunas geradas no fim do CSV original.
     uniao = pd.concat([dataset, df_results], axis=1)
 
-    # Salva o CSV com resultado do ML
-    uniao.to_csv("C:\\csv_completo.csv", index=False)
+    columns_to_process = [
+        "submission_date", "reviewer_id", "product_id", "product_name", 
+        "site_category_lv1", "site_category_lv2", "review_title", 
+        "recommend_to_a_friend", "review_text", "reviewer_gender", "reviewer_state"
+    ]
 
-add_feelings(
-    "C:\\Users\\augus\\Documents\\VsCode\\fatec\\api6\\HEXTECH-API6sem\\api6-back\\machineLearning\\modelo_e_vetorizador.joblib",
-    "C:\\fatec\\B2W-Reviews01\\B2W-Reviews01.csv"
-)
+    for column in columns_to_process:
+        processar_coluna(uniao, column)
+
+    mapping = {0: 'Negativo', 1: 'Neutro', 2: 'Positivo'}
+
+    uniao['Feeling_Predicted'] = uniao['Feeling_Predicted'].replace(mapping).fillna('')
+    uniao['Feeling_True'] = uniao['Feeling_True'].replace(mapping).fillna('')
+
+    complete_csv_path = os.path.join(script_dir, "csv_completo.csv")
+    uniao.to_csv(complete_csv_path, index=False, encoding='utf-8')
+
+    os.remove(formatted_csv_path)
+
+    insert_csv_to_mongodb(complete_csv_path)
+
+    os.remove(complete_csv_path)
