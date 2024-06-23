@@ -29,8 +29,6 @@ def list_collections():
     for collection in collections:
         print(f'Collection ID: {collection.id}')
 
-
-
 def get_all_users():
     fclient = init_firestore()
     users_ref = fclient.collection('users')
@@ -41,6 +39,18 @@ def get_all_users():
     # Convertendo o dicionário para JSON
     all_users_json = json.dumps(all_users, default=str)
     return all_users_json
+
+def get_user_by_id(user_id):
+    fclient = init_firestore()
+    user_ref = fclient.collection('users').document(user_id)
+    doc = user_ref.get()
+    if doc.exists:
+        user_data = doc.to_dict()
+        # Convertendo o dicionário para JSON
+        user_data_json = json.dumps(user_data, default=str)
+        return user_data_json
+    else:
+        return None
 
 def delete_all_users():
     fclient = init_firestore()
